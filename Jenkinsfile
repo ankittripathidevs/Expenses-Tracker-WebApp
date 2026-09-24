@@ -1,7 +1,11 @@
 pipeline {
     
-    agent any;
+    agent any
     
+    environment {
+        DOCKER_HUB = credentials('dockerHubCreds')
+    }
+
     stages {
         stage("Code Clone") {
             steps {
@@ -21,6 +25,21 @@ pipeline {
         stage("Test") {
             steps {
                 echo "Testing the Application"
+            }
+        }
+        
+        stage("Login to Docker") {
+            steps {
+                echo "Login to Docker"
+                sh 'echo $DOCKER_HUB_PSW | docker login -u $DOCKER_HUB_USR --password-stdin'
+            }
+        }
+        
+        stage("Push to Docker Hub") {
+            steps {
+                echo "Push Docker Image to Docker Hub"
+                sh "docker image tag expenses-tracker-app:latest  $DOCKER_HUB_USR/expenses-tracker:latest"
+                sh "docker push $DOCKER_HUB_USR/expenses-tracker:latest"
             }
         }
         

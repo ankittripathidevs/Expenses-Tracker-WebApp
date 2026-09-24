@@ -1,6 +1,8 @@
 services:
 
-  # ====== MYSQL DATABASE ===== #
+  # ============================================================
+  # MYSQL DATABASE
+  # ============================================================
   mysql:
     image: mysql:latest
     container_name: mysql_container
@@ -10,25 +12,28 @@ services:
       MYSQL_ROOT_PASSWORD: Test@123
       MYSQL_DATABASE: expenses_tracker
     volumes:
-      - ./mysql-database:/var/lib/mysql  # Bind mount 
+      # Persist MySQL data using a bind mount
+      - ./mysql-database:/var/lib/mysql
     networks:
       - expenses-app-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD","mysqladmin","ping","-h","localhost","-uroot","-pTest@123"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pTest@123"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
 
 
-  # ====== SPRING BOOT APPLICATION ===== #
-  java-app:
+  # ============================================================
+  # SPRING BOOT APPLICATION
+  # ============================================================
+  java_app:
     build: .
     image: expenses-tracker
     container_name: ExpensesTrackerApp-container
     ports:
-      - "8000:8080"
+      - "8080:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/expenses_tracker
       SPRING_DATASOURCE_USERNAME: root
@@ -36,10 +41,31 @@ services:
     networks:
       - expenses-app-network
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     restart: unless-stopped
 
 
-# Network for communication between containers
+  # ============================================================
+  # NGINX REVERSE PROXY
+  # ============================================================
+  nginx:
+    build:
+      context: ./nginx
+    image: expenses-tracker-nginx
+    container_name: nginx-container
+    ports:
+      - "80:80"
+    depends_on:
+      java_app:
+        condition: service_started
+    networks:
+      - expenses-app-network
+    restart: unless-stopped
+
+
+# ============================================================
+# NETWORK
+# ============================================================
 networks:
   expenses-app-network:

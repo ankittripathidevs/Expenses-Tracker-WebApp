@@ -1,52 +1,73 @@
 pipeline {
-    
+
     agent any
-    
-    environment {
-        DOCKER_HUB = credentials('dockerHubCreds')
-    }
 
     stages {
-        stage("Code Clone") {
+        
+        // =========================
+        // 1. Clone Source Code
+        // =========================
+        stage('Code Clone') {
             steps {
-                echo "Cloning code from Github"
-                git branch: "main",
-                    url: "https://github.com/ankittripathidevs/Expenses-Tracker-WebApp.git"
+                echo 'Cloning code from GitHub'
+                git branch: 'main',
+                    url: 'https://github.com/ankittripathidevs/Expenses-Tracker-WebApp.git'
             }
         }
-        
-        stage("Build") {
+
+        // =========================
+        // 2. Build Docker Image
+        // =========================
+        stage('Build') {
             steps {
-                echo "Building Docker Image"
-                sh "docker build -t expenses-tracker-app ."
+                echo 'Building Docker image'
+                sh 'docker build -t expenses-tracker-app .'
             }
         }
-        
-        stage("Test") {
+
+        // =========================
+        // 3. Test
+        // =========================
+        stage('Test') {
             steps {
-                echo "Testing the Application"
+                echo 'Testing the application'
+                // Add real tests here later
             }
         }
-        
-        stage("Login to Docker") {
+
+        // =========================
+        // 4. Login + Push to Docker Hub
+        // =========================
+        stage('Push to Docker Hub') {
             steps {
-                echo "Login to Docker"
-                sh 'echo $DOCKER_HUB_PSW | docker login -u $DOCKER_HUB_USR --password-stdin'
+                
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: "DockerHub_Creds",
+                        usernameVariable: "DockerHub_User",
+                        passwordVariable: "DockerHub_Pass"
+                    )
+                ]) {
+
+                    echo 'Logging in to Docker Hub'
+                    sh 'echo "$DockerHub_Pass" | docker login -u "$DockerHub_User" --password-stdin'
+
+                    echo 'Tagging Docker image'
+                    sh 'docker image tag expenses-tracker-app:latest "$DockerHub_User"/expenses-tracker:latest'
+
+                    echo 'Pushing Docker image'
+                    sh 'docker push "$DockerHub_User"/expenses-tracker:latest'
+                }
             }
         }
-        
-        stage("Push to Docker Hub") {
+
+        // =========================
+        // 5. Deploy
+        // =========================
+        stage('Deploy') {
             steps {
-                echo "Push Docker Image to Docker Hub"
-                sh "docker image tag expenses-tracker-app:latest  $DOCKER_HUB_USR/expenses-tracker:latest"
-                sh "docker push $DOCKER_HUB_USR/expenses-tracker:latest"
-            }
-        }
-        
-        stage("Deploy") {
-            steps {
-                echo "Deploy the Application"
-                sh "docker compose up -d --build"
+                echo 'Deploying application'
+                sh 'docker compose up -d --build'
             }
         }
     }

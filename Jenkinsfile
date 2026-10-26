@@ -1,9 +1,8 @@
 pipeline {
 
-    agent any
+    agent { label 'dev' }
 
     stages {
-        
         // =========================
         // 1. Clone Source Code
         // =========================
@@ -16,7 +15,17 @@ pipeline {
         }
 
         // =========================
-        // 2. Build Docker Image
+        // 2. Scan File (Security)
+        // =========================
+        stage('Trivy File Scan') {
+            steps {
+                echo 'Scanning files for vulnerabilities...'
+                sh 'trivy fs . --output results.json'
+            }
+        }
+
+        // =========================
+        // 3. Build Docker Image
         // =========================
         stage('Build') {
             steps {
@@ -26,7 +35,7 @@ pipeline {
         }
 
         // =========================
-        // 3. Test
+        // 4. Test
         // =========================
         stage('Test') {
             steps {
@@ -36,7 +45,7 @@ pipeline {
         }
 
         // =========================
-        // 4. Login + Push to Docker Hub
+        // 5. Login + Push to Docker Hub
         // =========================
         stage('Push to Docker Hub') {
             steps {
@@ -62,7 +71,7 @@ pipeline {
         }
 
         // =========================
-        // 5. Deploy
+        // 6. Deploy
         // =========================
         stage('Deploy') {
             steps {

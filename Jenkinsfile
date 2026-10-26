@@ -29,7 +29,7 @@ pipeline {
         // =========================
         stage('Build') {
             steps {
-                echo 'Building Docker image'
+                echo 'Building Docker Image'
                 sh 'docker build -t expenses-tracker-app .'
             }
         }

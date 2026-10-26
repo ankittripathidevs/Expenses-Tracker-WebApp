@@ -53,19 +53,19 @@ pipeline {
                 withCredentials([
                     usernamePassword(
                         credentialsId: "DockerHub_Credentials",
-                        usernameVariable: "DockerHub_User",
-                        passwordVariable: "DockerHub_Pass"
+                        usernameVariable: "DockerHub_USER",
+                        passwordVariable: "DockerHub_PASS"
                     )
                 ]) {
 
                     echo 'Logging in to Docker Hub'
-                    sh 'echo "$DockerHub_Pass" | docker login -u "$DockerHub_User" --password-stdin'
+                    sh 'echo "$DockerHub_PASS" | docker login -u "$DockerHub_USER" --password-stdin'
 
                     echo 'Tagging Docker image'
-                    sh 'docker image tag expenses-tracker-app:latest "$DockerHub_User"/expenses-tracker:latest'
+                    sh 'docker image tag expenses-tracker-app:latest "$DockerHub_USER"/expenses-tracker:latest'
 
                     echo 'Pushing Docker image'
-                    sh 'docker push "$DockerHub_User"/expenses-tracker:latest'
+                    sh 'docker push "$DockerHub_USER"/expenses-tracker:latest'
                 }
             }
         }
